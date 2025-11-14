@@ -39,7 +39,7 @@ This project targets python version ">=3.11, <3.12". You can download specific v
    cd risk-atlas-nexus-demos/gaf-guard
    conda create -n gaf-guard python=3.11
    conda activate gaf-guard
-   pip install -e .
+   pip install -e ".[ollama]" # depending on which inference engine to use [ollama, wml, vllm]
    ```
 
 2. Update the config variables and inference engine params in the server config file. Update LLM server (viz. ollama, vllm) credentials in the config file. Example server config is given below.
@@ -55,7 +55,7 @@ This project targets python version ">=3.11, <3.12". You can download specific v
 5. Start the GAF-Guard client
    - `python apps/cli/client.py --host localhost --port 8000`
 
-6. To run benchmark on already logged JSON trajectories
+6. To run benchmark on already logged JSON trajectories. `trails` directory is where all trials are stored.
    - `python apps/cli/run_benchmark.py --host localhost --port 8000 --trial-dir trials`
 
 ## Referencing the project
