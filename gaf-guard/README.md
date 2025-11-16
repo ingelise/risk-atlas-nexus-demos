@@ -11,7 +11,8 @@ https://www.youtube.com/watch?v=M4JSkdFg6I0
 
 ## Architecture
 
-![90a729e8-e95e-4383-a36b-ffc84a81287e](https://github.com/user-attachments/assets/f0546c3d-cf95-49c8-8112-21308bf6f7e6)
+<img width="1253" height="753" alt="image" src="https://github.com/user-attachments/assets/ccd17307-4e51-490a-8459-4227e2450664" />
+
 
 ## Agent Communication Protocol (ACP)
 
