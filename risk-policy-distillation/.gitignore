@@ -5,6 +5,7 @@
 # Ignore venv
 vrisk-atlas-nexus
 not for upload/
+./venv-risk-policy-distillation
 
 # Ignore Python cache
 __pycache__/
