@@ -39,11 +39,11 @@ For Mac users, if you are having issues with VLLM installation, you may need to 
 A python notebook demonstrates generation of policy explanations.
 * [Generate a global explanation](examples/notebooks/full_explanation_pipeline.ipynb). Run the full pipeline and generate a global summary given a dataset and an LLM-as-a-Judge.
 
-### Note: Risk Atlas Nexus
+### Note: AI Atlas Nexus
 
-Risk policy distillation uses resources and APIs from **Risk Atlas Nexus** to support key functions such as Risk Identification and other AI Governance tasks. Risk Atlas Nexus serves as a central platform to unify and streamline diverse tools and resources related to the governance of foundation models. 
+Risk policy distillation uses resources and APIs from **AI Atlas Nexus** to support key functions such as Risk Identification and other AI Governance tasks. AI Atlas Nexus serves as a central platform to unify and streamline diverse tools and resources related to the governance of foundation models. 
 
-Check out the official repo of [Risk Atlas Nexus](https://github.com/IBM/risk-atlas-nexus).
+Check out the official repo of [AI Atlas Nexus](https://github.com/IBM/ai-atlas-nexus).
 
 ## Referencing the project
 

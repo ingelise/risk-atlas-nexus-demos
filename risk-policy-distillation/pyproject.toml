@@ -55,7 +55,7 @@ dependencies = [
     "langchain_huggingface",
     "thefuzz",
     "bert_score",
-    "risk-atlas-nexus [wml]"
+    "ai-atlas-nexus [wml]"
 ]
 
 [tool.setuptools.dynamic]

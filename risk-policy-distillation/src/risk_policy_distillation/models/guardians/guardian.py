@@ -49,7 +49,7 @@ class Guardian(Judge):
                 0
             ].strip()
             if prediction == self.output_labels[0]:
-                prob_no = response.logprobs[prediction]
+                prob_no = response.logprobs.get(prediction, response.logprobs.get(' ' + prediction))
                 probs.append(
                     [
                         math.e**prob_no,
@@ -57,7 +57,7 @@ class Guardian(Judge):
                     ]
                 )
             elif prediction == self.output_labels[1]:
-                prob_yes = response.logprobs[prediction]
+                prob_yes = response.logprobs.get(prediction, response.logprobs.get(' ' + prediction))
                 probs.append(
                     [
                         1 - math.e**prob_yes,
