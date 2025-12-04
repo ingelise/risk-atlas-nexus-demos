@@ -29,9 +29,13 @@ class Guardian(Judge):
             messages.append({"role": "assistant", "content": response, "name": "test"})
 
         response = self.inference_engine.chat([messages])
-        prediction = re.findall("<score>(.*?)</score>", response[0].prediction)[
-            0
-        ].strip()
+        try:
+            prediction = re.findall("<score>(.*?)</score>", response[0].prediction)[
+                0
+            ].strip() 
+        except IndexError as e:
+            prediction = response[0].prediction
+
         # output_id = self.output_labels.index(response[0].prediction.split("\n")[0])
         output_id = self.output_labels.index(prediction)
 
@@ -45,9 +49,13 @@ class Guardian(Judge):
         responses = self.inference_engine.chat(messages)
         probs = []
         for response in responses:
-            prediction = re.findall("<score>(.*?)</score>", response.prediction)[
-                0
-            ].strip()
+            try:
+                prediction = re.findall("<score>(.*?)</score>", response.prediction)[
+                    0
+                ].strip()
+            except IndexError as e:
+                prediction = response.prediction
+
             if prediction == self.output_labels[0]:
                 prob_no = response.logprobs.get(prediction, response.logprobs.get(' ' + prediction))
                 probs.append(

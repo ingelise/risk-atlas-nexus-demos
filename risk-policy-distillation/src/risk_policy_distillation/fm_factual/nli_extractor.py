@@ -31,7 +31,10 @@ from risk_policy_distillation.fm_factual.utils import (
     dotdict,
     extract_last_square_brackets,
 )
-
+# Import inference engines from ai-atlas-nexus
+from ai_atlas_nexus.blocks.inference import (
+    InferenceEngine,
+)
 
 NLI_LABELS = ["entailment", "contradiction", "neutral"]
 
@@ -298,6 +301,7 @@ class NLIExtractor:
 
     def __init__(
         self,
+        inference_engine: InferenceEngine,
         model: str = "llama-3.1-70b-instruct",
         method: str = "logprobs",
         prompt_version: str = "v1",
@@ -305,6 +309,7 @@ class NLIExtractor:
         is_bert: bool = False,
         RITS: bool = True,
     ):
+        self.inference_engine = inference_engine
         self.model = model
         self.method = method
         self.prompt_version = prompt_version
@@ -320,8 +325,7 @@ class NLIExtractor:
             )
             self.prompt_end = self.rits_model_info.get("prompt_end", DEFAULT_PROMPT_END)
 
-            print(f"RITS = {RITS} Model = {self.model}")
-            self.llm_handler = LLMHandler(self.model, RITS=RITS)
+            self.llm_handler = LLMHandler(inference_engine=self.inference_engine, model=self.model, RITS=RITS)
 
             assert self.prompt_version in [
                 "v1",
@@ -383,10 +387,9 @@ class NLIExtractor:
                 probability = 1.0
             else:
                 logprob_sum = 0.0
-                generated_tokens = logprobs[:-1]
+                generated_tokens = logprobs#[:-1]
                 for token in generated_tokens:  # last token is just <|eot_id|>
-                    token = dotdict(token)
-                    logprob_sum += token.logprob
+                    logprob_sum += generated_tokens[token]
 
                 probability = np.exp(logprob_sum / len(generated_tokens))
         elif self.prompt_version == "v2":
@@ -498,9 +501,8 @@ class NLIExtractor:
                 desc="NLI",
                 unit="prompts",
             ):
-                generated_texts.append(response.choices[0].message.content)
-                generated_logprobs.append(response.choices[0].logprobs["content"])
-
+                generated_texts.append(response.prediction)
+                generated_logprobs.append(response.logprobs)
             results = []
             for text, logprobs in zip(generated_texts, generated_logprobs):
                 label, probability = self.extract_relationship(text, logprobs)

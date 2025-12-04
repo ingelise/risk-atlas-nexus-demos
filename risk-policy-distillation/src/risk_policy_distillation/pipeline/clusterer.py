@@ -26,6 +26,7 @@ class Clusterer:
         n_labels=10,
         n_iter=200,
     ):
+        self.inference_engine = inference_engine
         self.criterion = criterion
         self.label_names = label_names
 
@@ -97,7 +98,7 @@ class Clusterer:
             for i, c in enumerate(contexts)
         ]
 
-        nli_extractor = NLIExtractor(model, prompt_version=nli_prompt_version)
+        nli_extractor = NLIExtractor(self.inference_engine, model, prompt_version=nli_prompt_version)
 
         relations = nli_extractor.runall(
             atoms * len(contexts),  # fill in the atoms to be the same length as contexts
