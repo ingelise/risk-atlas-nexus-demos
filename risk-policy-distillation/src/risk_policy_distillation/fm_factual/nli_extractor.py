@@ -334,7 +334,7 @@ class NLIExtractor:
             ], f"Unknown prompt version for NLIExtractor."
 
             print(
-                f"[NLIExtractor] Using LLM on {RITS*'RITS'}{(not RITS)*'vLLM'}: {self.model}"
+                f"[NLIExtractor] Using LLM on {self.inference_engine}"
             )
             print(f"[NLIExtractor] Prompt version: {self.prompt_version}")
             self.bert_model = None

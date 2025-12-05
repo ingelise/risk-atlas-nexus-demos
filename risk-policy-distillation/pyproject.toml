@@ -51,7 +51,6 @@ dependencies = [
     "Adversary",
 
     # fact reasoner libs
-    "vllm",
     "langchain_huggingface",
     "thefuzz",
     "bert_score",

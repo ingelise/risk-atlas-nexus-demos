@@ -30,9 +30,6 @@ uv venv --python 3.12 .venv-risk-policy-distillation
 source .venv-risk-policy-distillation/bin/activate
 uv pip install .
 ```
-### Note: VLLM instructions
-For Mac users, if you are having issues with VLLM installation, you may need to follow the instuctions [here](https://docs.vllm.ai/en/stable/getting_started/installation/cpu/index.html?device=apple)
-
 
 ## See the pipeline in action
 
@@ -44,6 +41,7 @@ A python notebook demonstrates generation of policy explanations.
 Risk policy distillation uses resources and APIs from **AI Atlas Nexus** to support key functions such as Risk Identification and other AI Governance tasks. AI Atlas Nexus serves as a central platform to unify and streamline diverse tools and resources related to the governance of foundation models. 
 
 Check out the official repo of [AI Atlas Nexus](https://github.com/IBM/ai-atlas-nexus).
+
 
 ## Referencing the project
 

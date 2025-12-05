@@ -3,7 +3,6 @@ import os
 import litellm
 import torch
 from dotenv import load_dotenv
-from vllm import LLM, SamplingParams
 
 from risk_policy_distillation.fm_factual.utils import (
     DEFAULT_PROMPT_BEGIN,
