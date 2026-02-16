@@ -43,7 +43,7 @@ def get_human_response(state: HumanInTheLoopAgentState, config: RunnableConfig):
                 WorkflowMessage(
                     name="Human Intervention",
                     role=Role.AGENT,
-                    type=MessageType.HITL_QUERY,
+                    type=MessageType.GAF_GUARD_QUERY,
                     accept=UserInputType.INITIAL_RISKS,
                     content=(
                         ("\nSyntax Error, Try Again." if syntax_error else "")

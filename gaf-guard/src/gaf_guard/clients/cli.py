@@ -184,7 +184,7 @@ async def run_stream(host, port):
                                     show_choices=False,
                                 )
                             }
-                            input_message_type = MessageType.HITL_RESPONSE
+                            input_message_type = MessageType.GAF_GUARD_QUERY
                     elif event.type == "run.completed":
                         COMPLETED = True
                     processing.start()

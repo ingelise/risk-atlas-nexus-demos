@@ -19,11 +19,11 @@ app = typer.Typer()
 console = Console()
 
 
-@app.callback()
-def main() -> None:
-    """
-    GAF Guard Redirect Server
-    """
+# @app.callback()
+# def main() -> None:
+#     """
+#     GAF Guard Redirect Server
+#     """
 
 
 @app.command()
@@ -66,5 +66,5 @@ def client(client_type):
         print(e.stderr)
 
 
-# if __name__ == "__main__":
-#     app()
+if __name__ == "__main__":
+    app()

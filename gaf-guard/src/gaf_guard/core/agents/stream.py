@@ -54,7 +54,7 @@ def next_input_prompt(state: StreamAgentState, config: RunnableConfig):
         try:
             response = interrupt(
                 WorkflowMessage(
-                    type=MessageType.HITL_QUERY,
+                    type=MessageType.GAF_GUARD_QUERY,
                     content=(
                         ("\nSyntax Error, Try Again." if syntax_error else "")
                         + f"\nPlease choose one of the streaming source for real-time Risk Assessment and Drift Monitoring."

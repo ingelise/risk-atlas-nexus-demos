@@ -40,7 +40,6 @@ LOGGER = configure_logger(__name__)
 
 system_config = get_configuration()
 console = Console()
-
 server = Server()
 GAF_GUARD_AGENTS = {}
 CLIENT_CONFIGS = {}
@@ -93,9 +92,9 @@ async def orchestrator(
                 "configurable": {"thread_id": context.session.id} | RUN_CONFIGS,
             },
         )
-        if message.type == MessageType.HITL_RESPONSE:
+        if message.type == MessageType.GAF_GUARD_RESPONSE:
             state_dict = Command(resume=message.content)
-        elif message.type == MessageType.WORKFLOW_INPUT:
+        elif message.type == MessageType.GAF_GUARD_INPUT:
             state_dict = message.content
         else:
             raise Exception(

@@ -43,7 +43,7 @@ def workflow(
             write_to_stream = get_stream_writer()
             message = WorkflowMessage(
                 name=name or func.__name__,
-                type=MessageType.WORKFLOW_STARTED,
+                type=MessageType.GAF_GUARD_WF_STARTED,
                 role=role,
                 desc=desc,
                 content="New Workflow Started",
@@ -53,7 +53,20 @@ def workflow(
             )
 
             # Call the actual graph node
-            return func(*args, **kwargs, config=config)
+            event = func(*args, **kwargs, config=config)
+
+            write_to_stream(
+                {
+                    "client": message.model_copy(
+                        update={
+                            "type": MessageType.GAF_GUARD_WF_COMPLETED,
+                            "role": Role.SYSTEM,
+                        }
+                    )
+                }
+            )
+
+            return event
 
         return wrapper
 
@@ -96,16 +109,6 @@ def invoke_agent(
                 "name": agent_name,
             }
 
-            # display["live"].start()
-            # display["live"].update(
-            #     Panel(
-            #         Group(
-            #             f"Incoming request:\n{json.dumps(args[1].model_dump(include=set({'user_intent', 'prompt'}), exclude_none=True), indent=2)}\n",
-            #             display["progress"],
-            #         ),
-            #         title=f"{config.get('configurable', {}).get('trial_name', 'Trial_')} | Client: {client_id}",
-            #     )
-            # )
             console.log(
                 f"[bold yellow]Invoking Agent[/bold yellow][bold white]...{agent_name}[/bold white]"
             )
@@ -131,7 +134,7 @@ def workflow_step(
 
             write_to_stream = get_stream_writer()
             message = WorkflowMessage(
-                type=MessageType.STEP_STARTED,
+                type=MessageType.GAF_GUARD_STEP_STARTED,
                 role=Role.SYSTEM,
                 name=step_name or func.__name__,
                 desc=step_desc,
@@ -145,7 +148,7 @@ def workflow_step(
             event_message = message.model_copy(
                 update={
                     "role": step_role,
-                    "type": MessageType.STEP_DATA,
+                    "type": MessageType.GAF_GUARD_STEP_DATA,
                     "content": event,
                 }
             )
@@ -157,7 +160,7 @@ def workflow_step(
                 {
                     "client": message.model_copy(
                         update={
-                            "type": MessageType.STEP_COMPLETED,
+                            "type": MessageType.GAF_GUARD_STEP_COMPLETED,
                             "role": Role.SYSTEM,
                         }
                     )

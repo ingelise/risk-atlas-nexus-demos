@@ -13,7 +13,7 @@ from rich.console import Console
 
 from gaf_guard.clients.stream_adaptors import get_adapter
 from gaf_guard.core.models import WorkflowMessage
-from gaf_guard.toolkit.enums import MessageType, Role, UserInputType
+from gaf_guard.toolkit.enums import MessageType, Role, StreamStatus, UserInputType
 from gaf_guard.toolkit.file_utils import resolve_file_paths
 
 
@@ -63,8 +63,8 @@ st.markdown(
 )
 
 # Declare global session variables
-st.session_state.drift_threshold = 8
 st.session_state.priority = ["low", "medium", "high"]
+st.session_state.initial_risks_master = ["Toxic output", "Hallucination"]
 st.set_page_config(
     page_title="GAF Guard - A real-time monitoring system for risk assessment and drift monitoring.",
     layout="wide",  # This sets the app to wide mode
@@ -84,18 +84,15 @@ run_configs = {
     },
 }
 resolve_file_paths(run_configs)
-initial_risks = ["Toxic output", "Hallucination"]
 
 
 def file_uploaded():
     st.session_state.prompt_file = st.session_state.prompt_file_uploader.getvalue()
     message = WorkflowMessage(
         name="GAF Guard Client",
-        type=MessageType.HITL_QUERY,
+        type=MessageType.GAF_GUARD_QUERY,
         role=Role.SYSTEM,
-        content={
-            "File uploaded successfully": f"{st.session_state.prompt_file_uploader.name}"
-        },
+        content=f"**File uploaded successfully:** {st.session_state.prompt_file_uploader.name}",
         accept=UserInputType.INPUT_PROMPT,
         run_configs=run_configs,
     )
@@ -157,7 +154,9 @@ def add_sidebar():
                     "▶️  Start",
                     use_container_width=True,
                     disabled=(
-                        adapter_type == "Select" or st.session_state.stream_active
+                        adapter_type == "Select"
+                        or "prompt_file" not in st.session_state
+                        or st.session_state.stream_status == StreamStatus.ACTIVE
                     ),
                 ):
                     if st.session_state.setdefault(
@@ -167,7 +166,7 @@ def add_sidebar():
                             config={"byte_data": st.session_state.prompt_file},
                         ),
                     ):
-                        st.session_state.stream_active = True
+                        st.session_state.stream_status = StreamStatus.ACTIVE
                         st.rerun()
                     else:
                         st.write("Selected adaptor is not available.")
@@ -177,19 +176,21 @@ def add_sidebar():
                     "⏹️  Pause",
                     use_container_width=True,
                     disabled=(
-                        adapter_type == "Select" or not st.session_state.stream_active
+                        adapter_type == "Select"
+                        or st.session_state.stream_status
+                        in [StreamStatus.PAUSED, StreamStatus.STOPPED]
                     ),
                 ):
-                    st.session_state.stream_active = False
-                    message = WorkflowMessage(
-                        name="GAF Guard Client",
-                        type=MessageType.HITL_QUERY,
-                        role=Role.SYSTEM,
-                        content={"message_alert": "Input streaming is paused."},
-                        accept=UserInputType.INPUT_PROMPT,
-                        run_configs=run_configs,
+                    st.session_state.stream_status = StreamStatus.PAUSED
+                    st.session_state.messages.append(
+                        WorkflowMessage(
+                            name="GAF Guard Client",
+                            type=MessageType.GAF_GUARD_QUERY,
+                            role=Role.SYSTEM,
+                            content="**Alert:** Input streaming is paused.",
+                            accept=UserInputType.INPUT_PROMPT,
+                        )
                     )
-                    st.session_state.messages.append(message)
                     st.rerun()
 
         st.divider()
@@ -250,85 +251,88 @@ def render(message: WorkflowMessage, simulate=False):
                 st.session_state.sidebar_display = "input_prompt_source"
                 st.session_state.disabled_input = True
 
-    if isinstance(message.content, dict):
-        if message.name == "Input Prompt":
-            simulate_agent_response(
-                role=message.role.value,
-                message=f"###### :yellow[**Prompt {message.content["prompt_index"]}**]:  {message.content["prompt"]}",
-                simulate=simulate,
-                accept=message.accept,
-            )
-        else:
-            if len(message.content.items()) > 2:
-                data = []
-                for key, value in message.content.items():
-                    data.append({key.title(): value})
-
+    if message.type == MessageType.GAF_GUARD_WF_STARTED:
+        return False
+    if message.type == MessageType.GAF_GUARD_WF_COMPLETED:
+        return False
+    elif message.type == MessageType.GAF_GUARD_STEP_STARTED:
+        simulate_agent_response(
+            role=message.role.value,
+            message=f"##### :blue[Workflow Step:] **{message.name}** STARTED",
+            simulate=simulate,
+            accept=message.accept,
+        )
+    elif message.type == MessageType.GAF_GUARD_STEP_COMPLETED:
+        simulate_agent_response(
+            role=message.role.value,
+            message=f"##### :blue[Workflow Step:] **{message.name}** COMPLETED",
+            simulate=simulate,
+            accept=message.accept,
+        )
+    elif message.type == MessageType.GAF_GUARD_STEP_DATA:
+        if isinstance(message.content, dict):
+            if message.name == "Input Prompt":
                 simulate_agent_response(
                     role=message.role.value,
-                    message="###### :yellow[Risk Report]",
-                    json_data=data,
+                    message=f"###### :yellow[**Prompt {message.content["prompt_index"]}**]:  {message.content["prompt"]}",
                     simulate=simulate,
                     accept=message.accept,
                 )
             else:
-                for key, value in message.content.items():
-                    if key == "identified_risks":
-                        st.session_state.risks = value
-                    if isinstance(value, List) or isinstance(value, Dict):
-                        simulate_agent_response(
-                            role=message.role.value,
-                            message=f"###### :yellow[{key.replace('_', ' ').title()}]",
-                            json_data=value,
-                            simulate=simulate,
-                            accept=message.accept,
-                        )
-                    elif isinstance(value, str) and key.endswith("alert"):
-                        simulate_agent_response(
-                            role=message.role.value,
-                            message=f"###### :yellow[{key.replace('_', ' ').title()}]: :red[{value}]",
-                            simulate=simulate,
-                            accept=message.accept,
-                        )
-                    else:
-                        simulate_agent_response(
-                            role=message.role.value,
-                            message=f"###### :yellow[{key.replace('_', ' ').title()}]: {value}",
-                            simulate=simulate,
-                            accept=message.accept,
-                        )
+                if len(message.content.items()) > 2:
+                    data = []
+                    for key, value in message.content.items():
+                        data.append({key.title(): value})
+
+                    simulate_agent_response(
+                        role=message.role.value,
+                        message="###### :yellow[Risk Report]",
+                        json_data=data,
+                        simulate=simulate,
+                        accept=message.accept,
+                    )
+                else:
+                    for key, value in message.content.items():
+                        if key == "identified_risks":
+                            st.session_state.risks = value
+                        if isinstance(value, List) or isinstance(value, Dict):
+                            simulate_agent_response(
+                                role=message.role.value,
+                                message=f"###### :yellow[{key.replace('_', ' ').title()}]",
+                                json_data=value,
+                                simulate=simulate,
+                                accept=message.accept,
+                            )
+                        elif isinstance(value, str) and key.endswith("alert"):
+                            simulate_agent_response(
+                                role=message.role.value,
+                                message=f"###### :yellow[{key.replace('_', ' ').title()}]: :red[{value}]",
+                                simulate=simulate,
+                                accept=message.accept,
+                            )
+                        else:
+                            simulate_agent_response(
+                                role=message.role.value,
+                                message=f"###### :yellow[{key.replace('_', ' ').title()}]: {value}",
+                                simulate=simulate,
+                                accept=message.accept,
+                            )
+    elif message.type == MessageType.GAF_GUARD_QUERY:
+        simulate_agent_response(
+            role=message.role.value,
+            message=f":blue[{message.content}]",
+            simulate=simulate,
+            accept=message.accept,
+        )
     else:
-        if message.type == MessageType.WORKFLOW_STARTED:
-            return False
-        elif message.type == MessageType.STEP_STARTED:
+        # raise Exception(f"Invalid message type: {message.type}")
+        if message.content:
             simulate_agent_response(
                 role=message.role.value,
-                message=f"##### :blue[Workflow Step:] **{message.name}** STARTED",
+                message=message.content,
                 simulate=simulate,
                 accept=message.accept,
             )
-        elif message.type == MessageType.STEP_COMPLETED:
-            simulate_agent_response(
-                role=message.role.value,
-                message=f"##### :blue[Workflow Step:] **{message.name}** COMPLETED",
-                simulate=simulate,
-                accept=message.accept,
-            )
-        elif message.type == MessageType.HITL_QUERY:
-            simulate_agent_response(
-                role=message.role.value,
-                message=f":blue[{message.content}]",
-                simulate=simulate,
-                accept=message.accept,
-            )
-        else:
-            if message.content:
-                simulate_agent_response(
-                    role=message.role.value,
-                    message=message.content,
-                    simulate=simulate,
-                    accept=message.accept,
-                )
 
     return True
 
@@ -340,7 +344,7 @@ def initial_risks_selector():
         st.session_state.setdefault("initial_risks", {}).update(
             {
                 str(len(st.session_state.initial_risks)): {
-                    "risk": initial_risks[0],
+                    "risk": st.session_state.initial_risks_master[0],
                     "priority": "low",
                     "threshold": 0.01,
                 }
@@ -360,9 +364,11 @@ def initial_risks_selector():
             with col1:
                 value = st.selectbox(
                     "Risk" if key == "0" else " ",
-                    tuple(initial_risks),
+                    tuple(st.session_state.initial_risks_master),
                     key=f"col1{key}",
-                    index=initial_risks.index(initial_risk["risk"]),
+                    index=st.session_state.initial_risks_master.index(
+                        initial_risk["risk"]
+                    ),
                 )
                 st.session_state.initial_risks[key].update({"risk": value})
             with col2:
@@ -432,7 +438,7 @@ def connect():
                 base_url=f"http://{st.session_state.host}:{st.session_state.port}",
                 verify=True,
             )
-            asyncio.run(ping_server(client))
+            # asyncio.run(ping_server(client))
             st.write("Client created...")
         except Exception as e:
             st.session_state.error = "Failed to connect. Check hostname and port."
@@ -441,13 +447,14 @@ def connect():
         st.session_state.client_session = client.session()
         st.write("Client session created...")
 
+        st.session_state.drift_threshold = 8
         st.session_state.disabled_input = False
-        st.session_state.stream_active = False
+        st.session_state.stream_status = StreamStatus.STOPPED
         st.session_state.sidebar_display = "settings"
         st.session_state.messages = [
             WorkflowMessage(
                 name="GAF Guard Client",
-                type=MessageType.WORKFLOW_INPUT,
+                type=MessageType.GAF_GUARD_INPUT,
                 role=Role.USER,
                 accept=UserInputType.USER_INTENT,
                 run_configs=run_configs,
@@ -508,11 +515,11 @@ async def app():
 
     async with st.session_state.client_session:
 
-        if st.session_state.stream_active:
+        if st.session_state.stream_status == StreamStatus.ACTIVE:
             user_input = st.session_state.stream_adaptor.next()
             if not user_input:
                 del st.session_state["stream_adaptor"]
-                st.session_state.stream_active = False
+                st.session_state.stream_status = StreamStatus.STOPPED
                 st.rerun()
         else:
             # Accept user input
@@ -536,20 +543,13 @@ async def app():
                                     content=WorkflowMessage(
                                         name="GAF Guard Client",
                                         type=(
-                                            MessageType.HITL_RESPONSE
+                                            MessageType.GAF_GUARD_RESPONSE
                                             if last_message.type
-                                            == MessageType.HITL_QUERY
-                                            else MessageType.WORKFLOW_INPUT
+                                            == MessageType.GAF_GUARD_QUERY
+                                            else MessageType.GAF_GUARD_INPUT
                                         ),
                                         role=Role.USER,
-                                        content={
-                                            (
-                                                last_message.accept.value
-                                                if last_message.accept
-                                                == UserInputType.USER_INTENT
-                                                else last_message.accept
-                                            ): user_input
-                                        },
+                                        content={last_message.accept: user_input},
                                         run_configs=run_configs,
                                     ).model_dump_json(),
                                     content_type="text/plain",
@@ -569,13 +569,17 @@ async def app():
                                     event.run.await_request.message.parts[0].content
                                 )
                             )
-                            if not (
-                                message.accept == UserInputType.INPUT_PROMPT
-                                and st.session_state.stream_active
-                            ):
+                            if message.accept == UserInputType.INPUT_PROMPT:
+                                if (
+                                    st.session_state.stream_status
+                                    == StreamStatus.STOPPED
+                                ):
+                                    render(message, simulate=True)
+                                st.session_state.messages.append(message)
+                            else:
                                 render(message, simulate=True)
+                                st.session_state.messages.append(message)
 
-                            st.session_state.messages.append(message)
                             st.session_state.disabled_input = True
                             st.rerun()
 

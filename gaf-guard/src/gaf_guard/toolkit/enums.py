@@ -10,14 +10,17 @@ class CustomStrEnum(StrEnum):
 
 
 class MessageType(CustomStrEnum):
-    WORKFLOW_INPUT = auto()
-    WORKFLOW_STARTED = auto()
-    WORKFLOW_COMPLETED = auto()
-    STEP_STARTED = auto()
-    STEP_COMPLETED = auto()
-    STEP_DATA = auto()
-    HITL_QUERY = auto()
-    HITL_RESPONSE = auto()
+    # Client message types
+    GAF_GUARD_INPUT = auto()
+    GAF_GUARD_RESPONSE = auto()
+
+    # Server message types
+    GAF_GUARD_WF_STARTED = auto()
+    GAF_GUARD_WF_COMPLETED = auto()
+    GAF_GUARD_STEP_STARTED = auto()
+    GAF_GUARD_STEP_DATA = auto()
+    GAF_GUARD_STEP_COMPLETED = auto()
+    GAF_GUARD_QUERY = auto()
 
 
 class Role(StrEnum):
@@ -32,6 +35,16 @@ class Serializer(Enum):
 
 
 class UserInputType(CustomStrEnum):
+
+    # User can only send below message types
     USER_INTENT = auto()
     INITIAL_RISKS = auto()
     INPUT_PROMPT = auto()
+
+
+class StreamStatus(CustomStrEnum):
+
+    # User can only send below message types
+    ACTIVE = auto()
+    PAUSED = auto()
+    STOPPED = auto()
