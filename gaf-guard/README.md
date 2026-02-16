@@ -29,7 +29,8 @@ Check out the official repo of [AI Atlas Nexus](https://github.com/IBM/ai-atlas-
 ## Agentic Workflow
 The present agentic workflow is as shown below.
 
-<img width="742" height="2092" alt="output" src="https://github.com/user-attachments/assets/93db9787-ef68-41af-a89b-ad206cb49691" />
+<img width="661" height="2217" alt="output" src="https://github.com/user-attachments/assets/e3e3191a-6ab1-461b-b78d-d215a9518414" />
+
 
 
 ## Documentation
@@ -60,10 +61,14 @@ This project targets python version ">=3.11, <3.12". You can download specific v
    - `gaf-guard serve examples/server_configs/risk_assessment.yaml`
 
 5. Start the GAF-Guard client
-   - `python apps/cli/client.py --host localhost --port 8000`
+   - `gaf-guard client streamlit`
 
 6. To run benchmark on already logged JSON trajectories. `trails` directory is where all trials are stored.
-   - `python apps/cli/run_benchmark.py --host localhost --port 8000 --trial-dir trials`
+   - `gaf-guard benchmark --host localhost --port 8000 --trial-dir trials`
+
+## Streamlit client demo
+
+https://github.com/user-attachments/assets/0ee21e08-318e-4890-8cb7-d364d3b78abc
 
 ## Referencing the project
 
