@@ -68,7 +68,7 @@ This project targets python version ">=3.11, <3.12". You can download specific v
 
 ## Streamlit client demo
 
-
+https://github.com/user-attachments/assets/0ee21e08-318e-4890-8cb7-d364d3b78abc
 
 ## Referencing the project
 
