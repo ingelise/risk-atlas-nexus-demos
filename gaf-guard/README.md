@@ -29,7 +29,8 @@ Check out the official repo of [AI Atlas Nexus](https://github.com/IBM/ai-atlas-
 ## Agentic Workflow
 The present agentic workflow is as shown below.
 
-<img width="742" height="2092" alt="output" src="https://github.com/user-attachments/assets/93db9787-ef68-41af-a89b-ad206cb49691" />
+<img width="661" height="2217" alt="output" src="https://github.com/user-attachments/assets/e3e3191a-6ab1-461b-b78d-d215a9518414" />
+
 
 
 ## Documentation
@@ -66,6 +67,8 @@ This project targets python version ">=3.11, <3.12". You can download specific v
    - `gaf-guard benchmark --host localhost --port 8000 --trial-dir trials`
 
 ## Streamlit client demo
+
+
 
 ## Referencing the project
 
