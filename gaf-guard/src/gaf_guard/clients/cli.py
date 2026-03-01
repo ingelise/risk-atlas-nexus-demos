@@ -8,8 +8,9 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import Annotated, Dict, List
 
+import typer
 from acp_sdk.client import Client
 from acp_sdk.models import Message, MessagePart
 from rich.align import Align
@@ -22,6 +23,9 @@ from gaf_guard.clients.stream_adaptors import get_adapter
 from gaf_guard.core.models import UserInputType, WorkflowMessage
 from gaf_guard.toolkit.enums import MessageType, Role
 from gaf_guard.toolkit.file_utils import resolve_file_paths
+
+
+app = typer.Typer()
 
 
 def signal_handler(sig, frame):
@@ -90,7 +94,7 @@ async def run_cli_client(host, port):
                     border_style="blue",
                 )
             )
-            input_message_type = MessageType.GAF_GUARD_INPUT
+            input_message_type = MessageType.CLIENT_INPUT
             input_message_content = {
                 UserInputType.USER_INTENT: Prompt.ask(
                     prompt=f"\n[bold blue]Enter your intent[/bold blue]",
@@ -163,7 +167,10 @@ async def run_cli_client(host, port):
                                 )
                             )
                             if message.accept == UserInputType.INPUT_PROMPT:
-                                if "JSON" not in STREAM_ADAPTORS:
+                                prompt = None
+                                if "JSON" in STREAM_ADAPTORS:
+                                    prompt = STREAM_ADAPTORS["JSON"].next()
+                                if not prompt or "JSON" not in STREAM_ADAPTORS:
                                     console.print(
                                         f"[bold blue]{message.content}[/bold blue]: [bold]JSON[/bold]"
                                     )
@@ -177,11 +184,8 @@ async def run_cli_client(host, port):
                                             "byte_data": Path(prompt_file).read_bytes()
                                         },
                                     )
-                                prompt = STREAM_ADAPTORS["JSON"].next()
-                                if prompt:
-                                    input_message_content = {message.accept: prompt}
-                                else:
-                                    COMPLETED = True
+                                    prompt = STREAM_ADAPTORS["JSON"].next()
+                                input_message_content = {message.accept: prompt}
                             else:
                                 input_message_content = {
                                     message.accept: Prompt.ask(
@@ -190,7 +194,7 @@ async def run_cli_client(host, port):
                                         show_choices=False,
                                     )
                                 }
-                            input_message_type = MessageType.GAF_GUARD_RESPONSE
+                            input_message_type = MessageType.CLIENT_RESPONSE
                     elif event.type == "run.completed":
                         COMPLETED = True
                     processing.start()
@@ -198,3 +202,28 @@ async def run_cli_client(host, port):
                 if COMPLETED:
                     processing.stop()
                     break
+
+
+@app.command()
+def main(
+    host: Annotated[
+        str,
+        typer.Option(
+            help="Please enter GAF Guard Host.",
+            rich_help_panel="Hostname",
+        ),
+    ] = "localhost",
+    port: Annotated[
+        int,
+        typer.Option(
+            help="Please enter GAF Guard Port.",
+            rich_help_panel="Port",
+        ),
+    ] = 8000,
+):
+    os.system("clear")
+    asyncio.run(run_cli_client(host=host, port=port))
+
+
+if __name__ == "__main__":
+    app()
