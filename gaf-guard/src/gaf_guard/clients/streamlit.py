@@ -480,13 +480,13 @@ def connect():
         console.print(
             f"[[bold white]{datetime.now().strftime('%d-%m-%Y %H:%M:%S')}[/]] Client Id: {st.session_state.client_session._session.id}"
         )
-        console.print(
-            f"""
-        You can now view your Streamlit app in your browser.
+        #     console.print(
+        #         f"""
+        #     You can now view your Streamlit app in your browser.
 
-        Local URL: http://{st.session_state.host}:{st.session_state.port}
-    """
-        )
+        #     Local URL: http://{st.session_state.host}:{st.session_state.port}
+        # """
+        #     )
 
         status.update(
             label=f":material/rocket_launch: Connected to :yellow[**GAF Guard**] Server: :orange-badge[:material/check: {st.session_state.host}:{st.session_state.port}]",
@@ -504,10 +504,6 @@ def submit_input():
 
 async def app():
 
-    # run_configs["DriftMonitoringAgent"][
-    #     "drift_threshold"
-    # ] = st.session_state.drift_threshold
-
     st.title(f":yellow[GAF Guard]", text_alignment="center")
     st.subheader(
         "A real-time monitoring system for risk assessment and drift monitoring",
@@ -517,10 +513,6 @@ async def app():
 
     # add sidebar and related components
     add_sidebar()
-
-    # message_container = st.container(height="stretch")
-    # with message_container:
-    #     st.info("No messages yet. Start streaming to see data.")
 
     # Display chat messages from history
     for message in st.session_state.messages:
@@ -609,7 +601,6 @@ elif (
     and hasattr(st.session_state, "host")
     and hasattr(st.session_state, "port")
 ):
-    os.system("clear")
     connect()
 else:
     connect_screen_dialog()

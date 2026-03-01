@@ -9,7 +9,6 @@ import typer
 from rich.console import Console
 
 from gaf_guard.clients.benchmark import run_benchmark
-from gaf_guard.clients.cli import run_cli_client
 from gaf_guard.serve import start_server
 from gaf_guard.toolkit.logging import configure_logger
 
@@ -75,32 +74,31 @@ def client(
     ] = 8000,
 ):
     os.system("clear")
-    console.rule(f"[bold blue]Launching GAF Guard Client - {client}[/bold blue]")
+    console.rule(f"[bold blue]Launching GAF Guard {client.title()} Client[/bold blue]")
     try:
         if client == "streamlit":
             process = subprocess.Popen(
                 ["streamlit", "run", f"src/gaf_guard/clients/{client}.py"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
                 text=True,
             )
-            # Read output line by line in real-time
-            while True:
-                output = process.stdout.readline()
-                # Check if the process has finished and there is no more output
-                if output == "" and process.poll() is not None:
-                    break
-                if output:
-                    # Print the output immediately
-                    print(output.strip())
-                    # Flush the output to ensure it's displayed immediately, not buffered by Python's stdout
-                    sys.stdout.flush()
-
-            # Wait for the process to fully terminate and get the return code
-            return_code = process.wait()
-            return return_code
         elif client == "cli":
-            asyncio.run(run_cli_client(host=host, port=port))
+            process = subprocess.Popen(
+                [
+                    "python",
+                    f"src/gaf_guard/clients/{client}.py",
+                    "--host",
+                    host,
+                    "--port",
+                    str(port),
+                ],
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+
+        # Wait for the process to fully terminate and get the return code
+        return_code = process.wait()
+        return return_code
     except subprocess.CalledProcessError as e:
         print(f"Command failed with return code {e.returncode}. Error:")
         print(e.stderr)
