@@ -1,0 +1,74 @@
+================================================================================
+Ontology-Driven Red-Team Planning — Getting Started
+================================================================================
+
+1. INSTALL DEPENDENCIES
+   cd ontology-driven-coverage
+   pip install -r requirements.txt
+
+2. START THE MCP SERVER (Terminal 1)
+   python server/atlas_nexus_mcp_server.py --http
+   
+   Expected output:
+   Serving MCP server over streamable-http at http://127.0.0.1:8000/mcp
+
+3. RUN THE AGENT (Terminal 2)
+   export ANTHROPIC_API_KEY=sk-...  # Your Anthropic API key
+   python examples/redteam_agent_cli.py
+
+   The agent will:
+   - Scope risks for the example system
+   - Plan tests for each risk
+   - Report coverage %
+
+4. EXPLORE (Optional)
+   - Edit the system description in redteam_agent_cli.py
+   - Run examples/integration_example.py for multi-system planning
+   - Read DESIGN.md to understand the architecture
+   - Read PROJECT_OVERVIEW.md for detailed walkthrough
+
+================================================================================
+QUICK REFERENCE
+================================================================================
+
+Key Concepts:
+  - Scope: Which risks apply to this system?
+  - Plan:  What should we test? (objective, not payload)
+  - Route: Who tests it? (automation, human, or regression)
+  - Report: Coverage %, gaps, owner breakdown
+
+Key Files:
+  - server/atlas_nexus_mcp_server.py    (MCP server + tools)
+  - examples/redteam_agent_cli.py       (single-system planner)
+  - examples/integration_example.py     (multi-system demo)
+  - DESIGN.md                           (why this architecture)
+  - PROJECT_OVERVIEW.md                 (detailed guide)
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+"Connection refused"?
+  → Make sure server is running: python server/atlas_nexus_mcp_server.py --http
+
+"anthropic.AuthenticationError"?
+  → Set API key: export ANTHROPIC_API_KEY=sk-...
+
+"mcp module not found"?
+  → Install: pip install -r requirements.txt
+
+"Model not found"?
+  → Edit MODEL in redteam_agent_cli.py (e.g., claude-sonnet-5)
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. Try the single-system planner (this gets you running)
+2. Customize the system description for your use case
+3. Read DESIGN.md to understand why this structure works
+4. Connect to a real ontology (swap MockOntology → AIAtlasNexus)
+5. Add persistence (replace in-memory COVERAGE with a database)
+6. Integrate with ticketing (auto-file Jira for human red-team tasks)
+
+================================================================================

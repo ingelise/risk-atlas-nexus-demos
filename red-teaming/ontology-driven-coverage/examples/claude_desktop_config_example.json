@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "atlas-nexus-redteam": {
+      "command": "python",
+      "args": [
+        "/path/to/red-teaming/ontology-driven-coverage/server/atlas_nexus_mcp_server.py",
+        "--http"
+      ],
+      "env": {},
+      "disabled": false
+    }
+  }
+}
