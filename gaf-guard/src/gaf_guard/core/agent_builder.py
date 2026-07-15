@@ -82,7 +82,7 @@ class AgentBuilder:
                         }
                     ),
                     parameters=inference_class._inference_engine_parameter_class(
-                        **inference_engine_params["parameters"]
+                        **inference_engine_params.get("parameters", {})
                     ),
                 ),
             )

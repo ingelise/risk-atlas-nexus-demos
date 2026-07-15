@@ -14,7 +14,6 @@ from gaf_guard.core import ai_atlas_nexus
 from gaf_guard.core.agents import Agent
 from gaf_guard.core.decorators import workflow_step
 
-
 console = Console()
 
 
@@ -98,9 +97,13 @@ def assess_risk(
     ]
 
     # Invoke inference service
-    responses_high = inference_engine.chat(
-        messages=messages_high,
-        verbose=False,
+    responses_high = (
+        inference_engine.chat(
+            messages=messages_high,
+            verbose=False,
+        )
+        if messages_high
+        else []
     )
 
     # Transition risks
@@ -126,10 +129,15 @@ def assess_risk(
         ]
 
         # Invoke inference service
-        responses_transition = inference_engine.chat(
-            messages=messages_transition,
-            verbose=False,
+        responses_transition = (
+            inference_engine.chat(
+                messages=messages_transition,
+                verbose=False,
+            )
+            if messages_transition
+            else []
         )
+
         transition_risk_report = {
             risk.name: parse_model_assessment(response.prediction)
             for risk, response in zip(risks_transition, responses_transition)
@@ -183,9 +191,13 @@ def assess_risk(
         ]
 
         # Invoke inference service
-        responses_low = inference_engine.chat(
-            messages=messages_low,
-            verbose=False,
+        responses_low = (
+            inference_engine.chat(
+                messages=messages_low,
+                verbose=False,
+            )
+            if messages_low
+            else []
         )
 
         low_risk_report = {

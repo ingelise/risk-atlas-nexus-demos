@@ -15,7 +15,7 @@ keywords = [
 ]
 description = "An Agentic AI framework that can effectively detect and manage risks associated with LLMs for a given use-case."
 readme = "README.md"
-requires-python = ">=3.11.5"
+requires-python = ">=3.11, <3.14"
 classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
@@ -43,7 +43,8 @@ dependencies = [
     "pre-commit",
     "uvicorn==0.35.0",
     "streamlit",
-    "deepteam"
+    "deepteam",
+    "torchvision"
 ]
 
 [project.optional-dependencies]

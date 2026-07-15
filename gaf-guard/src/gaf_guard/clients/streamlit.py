@@ -1,16 +1,21 @@
 import asyncio
 import json
 import os
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
+import transformers
+import warnings
 
+transformers.logging.set_verbosity_error()
+warnings.filterwarnings("ignore")
 import streamlit as st
-from acp_sdk.client import Client
 from acp_sdk.models import Message, MessagePart
 from rich.console import Console
 
+from gaf_guard.clients.login_handler import LoginHandler
 from gaf_guard.clients.stream_adaptors import get_adapter
 from gaf_guard.core.models import WorkflowMessage
 from gaf_guard.toolkit.enums import (
@@ -22,8 +27,15 @@ from gaf_guard.toolkit.enums import (
 )
 from gaf_guard.toolkit.file_utils import resolve_file_paths
 
-
 GAF_GUARD_ROOT = Path(__file__).parent.parent.absolute()
+
+
+def signal_handler(sig, frame):
+    print("Exiting...")
+    for task in asyncio.tasks.all_tasks():
+        task.cancel()
+    sys.exit(0)
+
 
 # Apply CSS to hide chat_input when app is running (processing)
 st.markdown(
@@ -67,7 +79,7 @@ st.markdown(
 if "server_status" not in st.session_state:
     st.session_state.server_status = ServerStatus.DISCONNECTED
 if "host" not in st.session_state:
-    st.session_state.host = "localhost"
+    st.session_state.host = "http://localhost"
 if "port" not in st.session_state:
     st.session_state.port = 8000
 st.session_state.priority = ["low", "medium", "high"]
@@ -82,6 +94,7 @@ st.set_page_config(
     },
     # initial_sidebar_state="expanded",
 )
+
 console = Console(log_time=True)
 run_configs = {
     "RiskGeneratorAgent": {
@@ -109,7 +122,7 @@ def file_uploaded():
         name="GAF Guard Client",
         type=MessageType.GAF_GUARD_QUERY,
         role=Role.SYSTEM,
-        content=f"**File uploaded successfully:** {st.session_state.prompt_file_uploader.name}",
+        content=f"**File uploaded successfully:** {st.session_state.prompt_file_uploader.name}. Please click on **Start** to begin risk assessment.",
         accept=UserInputType.INPUT_PROMPT,
         run_configs=run_configs,
     )
@@ -231,7 +244,7 @@ def add_sidebar():
         )
         if hasattr(st.session_state, "client_session"):
             ai_atlas_button.markdown(
-                f"Client Id: {str(st.session_state.client_session._session.id)[0:13]} \n :violet-badge[:material/rocket_launch: Connected to :yellow[GAF Guard] Server:] :orange-badge[:material/check: {st.session_state.host}:{st.session_state.port}]",
+                f"Client Id: {str(st.session_state.client_session._session.id)[0:13]} \n :violet-badge[:material/rocket_launch: Connected to :yellow[GAF Guard] Server:] :orange-badge[:material/check: {st.session_state.base_url}]",
                 text_alignment="center",
             )
         else:
@@ -432,23 +445,17 @@ def initial_risks_selector():
 )
 def connect_screen_dialog():
 
-    async def ping_server():
-        await Client(
-            base_url=f"http://{st.session_state.host}:{st.session_state.port}",
-            verify=True,
-        ).ping()
-
     def server_connect():
         st.session_state.server_status = ServerStatus.CONNECTING
 
     with st.form("login_form"):
         st.session_state.host = st.text_input(
-            "GAF Guard Host",
+            "**GAF Guard Host**",
             value=st.session_state.host,
             disabled=st.session_state.server_status == ServerStatus.CONNECTING,
         )
-        st.session_state.port = st.number_input(
-            "GAF Guard Port",
+        st.session_state.port = st.text_input(
+            "**GAF Guard Port**",
             value=st.session_state.port,
             disabled=st.session_state.server_status == ServerStatus.CONNECTING,
         )
@@ -457,24 +464,30 @@ def connect_screen_dialog():
         )
 
     if st.session_state.server_status == ServerStatus.FAILED:
-        st.error("Failed to connect. Please check hostname and port.", icon="🚨")
+        st.error(st.session_state.error, icon="🚨")
     elif submitted:
+        st.session_state.base_url = st.session_state.host + f":{st.session_state.port}"
         with st.status(
-            f"Connecting to GAF Guard using host: :blue[**{st.session_state.host}**] and port: :blue[**{st.session_state.port}**]",
+            f"Connecting to GAF Guard using host: :blue[**{st.session_state.base_url}**]",
             expanded=True,
         ) as status:
             try:
-                # ping server for health check
-                asyncio.run(ping_server())
-
-                client = Client(
-                    base_url=f"http://{st.session_state.host}:{st.session_state.port}",
-                    verify=True,
+                login_handler = LoginHandler(
+                    st.session_state.host, st.session_state.port
                 )
+
+                # ping server for health check
+                asyncio.run(login_handler.health_check())
+
+                client = login_handler.create_client()
                 st.write("Client created...")
                 time.sleep(0.5)
                 st.session_state.client_session = client.session()
                 st.write("Client session created...")
+            except Exception as e:
+                st.session_state.server_status = ServerStatus.FAILED
+                st.session_state.error = str(e)
+            else:
                 time.sleep(0.5)
                 st.session_state.server_status = ServerStatus.CONNECTED
 
@@ -502,13 +515,11 @@ def connect_screen_dialog():
                 )
 
                 status.update(
-                    label=f":material/rocket_launch: Connected to :yellow[**GAF Guard**] Server: :orange-badge[:material/check: {st.session_state.host}:{st.session_state.port}]",
+                    label=f":material/rocket_launch: Connected to :yellow[**GAF Guard**] Server: :orange-badge[:material/check: {st.session_state.base_url}]",
                     state="complete",
                     expanded=True,
                 )
                 time.sleep(1)
-            except Exception as e:
-                st.session_state.server_status = ServerStatus.FAILED
             finally:
                 st.rerun()
 
@@ -528,9 +539,16 @@ async def app():
     # add sidebar and related components
     add_sidebar()
 
-    # Display chat messages from history
-    for message in st.session_state.messages:
-        render(message)
+    if len(st.session_state.messages) > 1:
+        # Display chat messages from history
+        for message in st.session_state.messages:
+            render(message)
+    else:
+        message_container = st.container(height="stretch")
+        with message_container:
+            st.info(
+                "Begin a new workflow. Please enter your intent in the text box below."
+            )
 
     last_message: WorkflowMessage = st.session_state.messages[-1]
 

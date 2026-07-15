@@ -19,6 +19,7 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.prompt import Prompt
 
+from gaf_guard.clients.login_handler import LoginHandler
 from gaf_guard.clients.stream_adaptors import get_adapter
 from gaf_guard.core.models import UserInputType, WorkflowMessage
 from gaf_guard.toolkit.enums import MessageType, Role
@@ -65,9 +66,9 @@ run_configs = {
 resolve_file_paths(run_configs)
 
 
-async def run_cli_client(host, port):
+async def run_cli_client(login_handler):
     status = console.status(
-        f"[bold yellow] Trying to connect to [italic blue][GAF Guard][/italic blue] using host: [bold white]{host}[/] and port: [bold white]{port}[/]. To abort press CTRL+C",
+        f"[bold yellow] Trying to connect to [italic blue][GAF Guard][/italic blue] using host: [bold white]{login_handler.host}[/] and port: [bold white]{login_handler.port}[/]. To abort press CTRL+C",
     )
     processing = console.status(
         "[italic bold yellow]Processing...[/]",
@@ -75,7 +76,7 @@ async def run_cli_client(host, port):
     )
     with Live(Group(status), console=console, screen=True) as live:
         async with (
-            Client(base_url=f"http://{host}:{port}") as client,
+            login_handler.create_client() as client,
             client.session() as session,
         ):
             status.update(f"[bold yellow] :bell: Successfully connected.[/]")
@@ -229,14 +230,16 @@ def main(
             help="Please enter GAF Guard Port.",
             rich_help_panel="Port",
         ),
-    ] = 8000,
+    ] = None,
 ):
     os.system("clear")
 
-    # ping server for health check
-    asyncio.run(ping_server(host, port))
+    login_handler = LoginHandler(host, port)
 
-    asyncio.run(run_cli_client(host=host, port=port))
+    # ping server for health check
+    asyncio.run(login_handler.health_check())
+
+    asyncio.run(run_cli_client(login_handler))
 
 
 if __name__ == "__main__":
