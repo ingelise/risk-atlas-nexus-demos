@@ -39,6 +39,7 @@ Note that all contributions to this project are [released][released] to the publ
 | [Gaf-Guard](https://github.com/IBM/ai-atlas-nexus-demos/tree/main/gaf-guard) | risk management, AI agents, | GAF-Guard is an AI framework that can effectively detect and manage risks associated with LLMs for a given use-case.|
 | [Neo4j-Db ](https://github.com/IBM/ai-atlas-nexus-demos/tree/main/neo4j-db) |neo4j, Docker | Set up a docker container with an instance of neo4j community and import the data from AI Atlas Nexus into it. |
 | [AI Atlas Nexus Graph Visualisation ](https://github.com/IBM/ai-atlas-nexus-demos/tree/main/ran-viz) |python, sigmajs, viz, ui | Export AI Atlas Nexus content for a sigmajs graph and display it in the UI. |
+| [Risk-to-Code Traceability](https://github.com/IBM/ai-atlas-nexus-demos/tree/main/risk_code_traceability) | RDF-star, pyoxigraph, LinkML, risk detection | Links Graphify-extracted code artifacts to AI Atlas Nexus risks via a keyword/embedding/LLM pipeline, stored as an RDF-star graph. |
 
 
 ## License

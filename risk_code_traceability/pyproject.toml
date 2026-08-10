@@ -1,0 +1,29 @@
+[project]
+name = "risk-code-traceability"
+version = "0.1.0"
+description = "Traceability links between Graphify code artifacts and AI Atlas Nexus risks, stored as an RDF-star graph."
+requires-python = ">=3.11, <3.13"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "ai-atlas-nexus>=1.2.4",
+    "pyoxigraph>=0.5",
+    "linkml-runtime>=1.7",
+    "txtai[vectors]>=9.0",
+    "anthropic>=0.28",
+    "networkx>=3.0",
+    "pandas",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "jupyter", "nbmake", "linkml"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["ai_atlas_nexus.*", "txtai.*"]
+ignore_missing_imports = true

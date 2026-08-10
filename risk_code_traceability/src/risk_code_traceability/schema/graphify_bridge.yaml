@@ -1,0 +1,131 @@
+# SPDX-License-Identifier: Apache-2.0
+id: https://example.org/graphify-bridge
+name: graphify-bridge
+description: >
+  Bridge schema connecting Graphify-extracted code artifacts to the
+  AI Atlas Nexus risk ontology via `imports`, so Risk/Entity classes
+  are reused rather than duplicated.
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  graphify: https://example.org/graphify-bridge/
+  skos: http://www.w3.org/2004/02/skos/core#
+
+default_prefix: graphify
+default_range: string
+
+imports:
+  - linkml:types
+  # Resolved to an absolute filesystem path at build time by
+  # scripts/resolve_bridge_schema.py, since ai-atlas-nexus's installed
+  # location varies by environment and can't be hardcoded here.
+  # Run that script before `gen-json-schema` / `gen-pydantic` on this file.
+  - AI_ATLAS_NEXUS_SCHEMA_PATH
+
+enums:
+  NodeTypeEnum:
+    permissible_values:
+      file: {}
+      function: {}
+      class_definition: {}
+      concept: {}
+      module: {}
+
+  DetectionMethodEnum:
+    permissible_values:
+      keyword: {}
+      embedding: {}
+      llm: {}
+
+  LinkStatusEnum:
+    permissible_values:
+      proposed: {}
+      confirmed: {}
+      rejected: {}
+
+classes:
+  CodeArtifact:
+    description: >
+      A node extracted from a codebase by Graphify (file, function,
+      class, or concept). Inherits from Entity so it participates in
+      Atlas Nexus graph queries without upstream schema changes.
+    is_a: Entity
+    slots:
+      - id
+      - name
+      - source_file
+      - node_type
+      - community_id
+      - content_hash
+      - content_summary
+      - source_commit
+
+  RiskTraceabilityLink:
+    description: >
+      Reified assertion that a CodeArtifact relates to a Risk, with
+      provenance. Stored in pyoxigraph as a link node pointing at an
+      RDF-star quoted triple, since this pyoxigraph version only
+      supports quoted triples in object position:
+        :link graphify:asserts <<( :artifact atlas:hasRelatedRisk :risk )>> ;
+              graphify:confidence X ; graphify:status Y .
+    is_a: Entity
+    slots:
+      - id
+      - subject_id
+      - risk_id
+      - confidence
+      - detection_method
+      - rationale
+      - status
+      - extracted_at
+      - source_commit
+
+slots:
+  source_file:
+    range: string
+    description: Relative path of the file within the repository.
+
+  node_type:
+    range: NodeTypeEnum
+
+  community_id:
+    range: integer
+    description: Leiden community ID assigned by Graphify.
+
+  content_hash:
+    range: string
+    description: SHA-256 of the node's content; used for incremental re-runs.
+
+  content_summary:
+    range: string
+    description: Graphify's per-node extracted text summary.
+
+  source_commit:
+    range: string
+    description: Git commit SHA this extraction was derived from.
+
+  subject_id:
+    range: CodeArtifact
+
+  risk_id:
+    range: string
+    description: The id of the Risk instance from the Atlas Nexus taxonomy.
+
+  confidence:
+    range: float
+    minimum_value: 0.0
+    maximum_value: 1.0
+
+  detection_method:
+    range: DetectionMethodEnum
+
+  rationale:
+    range: string
+    description: LLM-generated justification (only populated for llm detection method).
+
+  status:
+    range: LinkStatusEnum
+    ifabsent: proposed
+
+  extracted_at:
+    range: datetime

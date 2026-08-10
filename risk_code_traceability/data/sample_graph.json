@@ -1,0 +1,40 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "nodes": [
+    {
+      "id": "src/inference.py",
+      "label": "inference.py",
+      "file_type": "python",
+      "source_file": "src/inference.py",
+      "community": 0,
+      "summary": "Loads a serialized model from disk using pickle and runs inference.",
+      "content": "import pickle\ndef load_model(path): return pickle.load(open(path,'rb'))",
+      "git_commit": "abc123"
+    },
+    {
+      "id": "src/inference.py::load_model",
+      "label": "load_model",
+      "file_type": "python",
+      "source_file": "src/inference.py",
+      "community": 0,
+      "summary": "Deserializes a model object from a pickle file at the given path.",
+      "content": "def load_model(path): return pickle.load(open(path,'rb'))",
+      "git_commit": "abc123"
+    },
+    {
+      "id": "src/logging_utils.py::log_user_input",
+      "label": "log_user_input",
+      "file_type": "python",
+      "source_file": "src/logging_utils.py",
+      "community": 1,
+      "summary": "Logs full user input including email and query text to a file.",
+      "content": "def log_user_input(user_id, email, query): write_log(user_id, email, query)",
+      "git_commit": "abc123"
+    }
+  ],
+  "links": [
+    {"source": "src/inference.py", "target": "src/inference.py::load_model", "relation": "contains"},
+    {"source": "src/inference.py::load_model", "target": "src/logging_utils.py::log_user_input", "relation": "calls"}
+  ]
+}
